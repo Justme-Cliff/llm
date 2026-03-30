@@ -4,16 +4,15 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-export PATH="/c/Program Files/CMake/bin:$PATH"
-export PATH="/c/Strawberry/c/bin:$PATH"
-export PATH="/c/Program Files/Git/usr/bin:$PATH"
+CMAKE="/c/Program Files/CMake/bin/cmake.exe"
+NINJA="/c/Strawberry/c/bin/ninja.exe"
 
 echo "=== Cleaning previous build ==="
 rm -rf build_ninja
 
 echo "=== Building ==="
-cmake -G "Ninja" -S . -B build_ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build_ninja --config Release
+"$CMAKE" -G "Ninja" -DCMAKE_MAKE_PROGRAM="$NINJA" -S . -B build_ninja -DCMAKE_BUILD_TYPE=Release
+"$CMAKE" --build build_ninja --config Release
 
 echo "=== Training ==="
 ./build_ninja/train_main.exe \n  --data data.csv \n  --out out \n  --pretrain-seconds 3600 \n  --finetune-seconds 1800
