@@ -1,0 +1,7 @@
+build/
+build_ninja/
+build_mingw/
+out*/
+*.ckpt
+*.o
+*.exe

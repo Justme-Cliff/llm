@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Mini LLM</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #212121;
+      --sidebar: #171717;
+      --surface: #2f2f2f;
+      --border: #3f3f3f;
+      --accent: #10a37f;
+      --text: #ececec;
+      --muted: #8e8ea0;
+      --user-bg: #2f2f2f;
+      --bot-bg: transparent;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: var(--sidebar);
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 8px 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700; color: #fff;
+    }
+
+    .new-chat-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      width: 100%;
+    }
+    .new-chat-btn:hover { background: var(--surface); }
+
+    .sidebar-section {
+      margin-top: 20px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      padding: 0 8px 8px;
+    }
+
+    .beta-badge {
+      display: inline-block;
+      background: #3a2a00;
+      color: #f0a500;
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 99px;
+      border: 1px solid #5a4000;
+      letter-spacing: 0.05em;
+      margin-left: 6px;
+    }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--muted);
+      padding-left: 8px;
+    }
+
+    /* Main */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Messages */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .messages::-webkit-scrollbar { width: 5px; }
+    .messages::-webkit-scrollbar-track { background: transparent; }
+    .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--muted);
+      padding-bottom: 80px;
+    }
+
+    .empty-state .big-icon {
+      width: 48px; height: 48px;
+      background: var(--accent);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+    }
+
+    .empty-state h2 { font-size: 1.2rem; color: var(--text); font-weight: 500; }
+    .empty-state p  { font-size: 0.85rem; }
+
+    .message-row {
+      width: 100%;
+      padding: 20px 0;
+      border-bottom: 1px solid transparent;
+    }
+
+    .message-row.bot {
+      background: #1a1a1a;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    .message-inner {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .msg-avatar {
+      width: 30px; height: 30px;
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+      letter-spacing: 0.02em;
+    }
+
+    .message-row.user .msg-avatar {
+      background: #5436DA;
+      color: #fff;
+    }
+
+    .message-row.bot .msg-avatar {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .msg-content {
+      flex: 1;
+      font-size: 0.93rem;
+      line-height: 1.65;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      padding-top: 3px;
+    }
+
+    .msg-content.thinking {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* Input */
+    .input-wrap {
+      padding: 16px 24px 20px;
+      background: var(--bg);
+    }
+
+    .input-box {
+      max-width: 720px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s;
+    }
+
+    .input-box:focus-within { border-color: var(--accent); }
+
+    textarea {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.93rem;
+      line-height: 1.55;
+      resize: none;
+      padding: 14px 16px 6px;
+      max-height: 180px;
+      min-height: 28px;
+      width: 100%;
+    }
+
+    textarea::placeholder { color: #5a5a6e; }
+
+    .input-actions {
+      display: flex;
+      align-items: center;
+      padding: 6px 10px 10px;
+      gap: 8px;
+    }
+
+    .token-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .token-label input {
+      width: 52px;
+      background: #1c1c1c;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      padding: 3px 6px;
+      outline: none;
+    }
+
+    .token-label input:focus { border-color: var(--accent); }
+
+    .send-btn {
+      margin-left: auto;
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.15s, transform 0.1s;
+      flex-shrink: 0;
+    }
+    .send-btn:hover { opacity: 0.85; }
+    .send-btn:active { transform: scale(0.93); }
+    .send-btn:disabled { background: var(--border); cursor: not-allowed; opacity: 1; }
+    .send-btn svg { width: 15px; height: 15px; fill: currentColor; }
+
+    .footer-note {
+      max-width: 720px;
+      margin: 8px auto 0;
+      text-align: center;
+      font-size: 0.7rem;
+      color: #4a4a5a;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .message-row { animation: fadeUp 0.18s ease; }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">M</div>
+    Mini LLM <span class="beta-badge">BETA</span>
+  </div>
+  <button class="new-chat-btn" id="newChat">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z"/></svg>
+    New chat
+  </button>
+  <div class="sidebar-section">Model</div>
+  <div style="padding:0 8px; font-size:0.8rem; color:#8e8ea0;">GRU · CPU · Local</div>
+  <div class="sidebar-bottom">Running on your machine</div>
+</div>
+
+<div class="main">
+  <div class="messages" id="messages">
+    <div class="empty-state" id="emptyState">
+      <div class="big-icon">🤖</div>
+      <h2>Mini LLM</h2>
+      <p>A small model running entirely on your CPU.</p>
+    </div>
+  </div>
+
+  <div class="input-wrap">
+    <div class="input-box">
+      <textarea id="prompt" rows="1" placeholder="Message Mini LLM…"></textarea>
+      <div class="input-actions">
+        <label class="token-label">
+          Max tokens
+          <input id="maxTokens" type="number" value="160" min="1" max="512"/>
+        </label>
+        <button class="send-btn" id="send">
+          <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="footer-note">Mini LLM can make mistakes. Outputs may be incoherent — it's tiny by design.</div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
