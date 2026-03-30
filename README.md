@@ -162,7 +162,6 @@ mini-llm/
 │
 ├── data.csv                  # Training dataset (~779 Q&A pairs)
 ├── CMakeLists.txt            # Build configuration (CMake + Ninja)
-├── run.sh                    # One-command build + train + serve script
 └── README.md
 ```
 
@@ -199,42 +198,52 @@ On Windows install via [MSYS2](https://www.msys2.org/) or [winlibs](https://winl
 
 ---
 
-## Quick Start
+## How to Run
 
-### One command (recommended)
+Run all three steps from your project folder in PowerShell:
 
-```bash
-bash run.sh
-```
+### Step 1 — Build
 
-This will:
-1. Build the project with CMake + Ninja
-2. Train for 1 hour pretrain + 30 min finetune
-3. Start the chat server at `http://localhost:8080`
-
-### Manual steps
-
-**Build:**
-```bash
+```powershell
 cmake -G "Ninja" -S . -B build_ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build_ninja --config Release
 ```
 
-**Train:**
-```bash
-./build_ninja/train_main.exe \
-  --data data.csv \
-  --out out \
-  --pretrain-seconds 3600 \
-  --finetune-seconds 1800
+This compiles all the C source files into two executables:
+- `build_ninja/train_main.exe` — the training program
+- `build_ninja/chat_server_main.exe` — the chat server
+
+You only need to do this once (or after changing source code).
+
+### Step 2 — Train
+
+```powershell
+.\build_ninja\train_main.exe --data data.csv --out out --pretrain-seconds 3600 --finetune-seconds 1800
 ```
 
-**Chat:**
-```bash
-./build_ninja/chat_server_main.exe --ckpt out/finetune.ckpt --port 8080 --ui ui
+This runs two training stages back to back:
+- **Pretrain** (3600s = 1 hour) — broad learning across the whole dataset
+- **Finetune** (1800s = 30 min) — focused learning on assistant-style responses
+
+When it finishes you'll find the saved model and loss charts in the `out/` folder.
+
+Want faster training to test? Use smaller numbers:
+```powershell
+.\build_ninja\train_main.exe --data data.csv --out out --pretrain-seconds 120 --finetune-seconds 60
 ```
 
-Then open `http://localhost:8080`.
+### Step 3 — Chat
+
+```powershell
+.\build_ninja\chat_server_main.exe --ckpt out\finetune.ckpt --port 8080 --ui ui
+```
+
+Then open your browser at:
+```
+http://localhost:8080
+```
+
+To stop the server press `Ctrl+C`.
 
 ---
 
