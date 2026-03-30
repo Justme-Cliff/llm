@@ -4,6 +4,11 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Add common Windows tool paths so cmake/ninja/gcc are found from bash
+export PATH="/c/Program Files/CMake/bin:$PATH"
+export PATH="/c/Strawberry/c/bin:$PATH"
+export PATH="/c/Program Files/Git/usr/bin:$PATH"
+
 echo "=== Building ==="
 cmake -G "Ninja" -S . -B build_ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build_ninja --config Release
