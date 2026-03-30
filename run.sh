@@ -9,6 +9,9 @@ export PATH="/c/Program Files/CMake/bin:$PATH"
 export PATH="/c/Strawberry/c/bin:$PATH"
 export PATH="/c/Program Files/Git/usr/bin:$PATH"
 
+echo "=== Cleaning previous build ==="
+rm -rf build_ninja
+
 echo "=== Building ==="
 cmake -G "Ninja" -S . -B build_ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build_ninja --config Release
