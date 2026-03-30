@@ -4,8 +4,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-CMAKE="/c/Program Files/CMake/bin/cmake.exe"
-NINJA="/c/Strawberry/c/bin/ninja.exe"
+CMAKE="/c/Program Files/CMake/bin/cmake"
+NINJA="/c/Strawberry/c/bin/ninja"
 
 echo "=== Cleaning previous build ==="
 rm -rf build_ninja
